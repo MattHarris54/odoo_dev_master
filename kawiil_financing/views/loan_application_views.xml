@@ -37,8 +37,7 @@
         attribute driven by a domain, to make the rows carry meaning at a
         glance.
     -->
-    <!--
-    <record id="loan_application_view_list" model="ir.ui.view">
+        <record id="loan_application_view_list" model="ir.ui.view">
         <field name="name">loan.application.view.list</field>
         <field name="model">loan.application</field>
         <field name="arch" type="xml">
@@ -51,7 +50,7 @@
             </list>
         </field>
     </record>
-    -->
+   
 
     <!--
         Assignment 2.07. Worked example, and the answer to "why are my fields

@@ -36,7 +36,7 @@
     # TODO (assignment 2.03): this module starts linking to products, so swap
     # this for the "product" module. Drop "base" when you do — product already
     # depends on it, and Odoo installs the whole chain for you.
-    "depends": ["base"],
+    "depends": ["product"],
     # Odoo Proprietary License, the default for custom customer work.
     "license": "OPL-1",
     # XML and CSV files Odoo loads on install, in the order you list them.
@@ -59,7 +59,13 @@
     #     "views/loan_application_tag_views.xml",             2.08
     #     "views/loan_application_document_type_views.xml",   2.08
     #     "views/kawiil_financing_menu.xml",                  2.05
-    "data": [],
+    "data": [
+        "security/kawiil_financing_groups.xml", 
+        "security/ir.model.access.csv",                   
+        "security/kawiil_financing_security.xml",
+        "views/loan_application_views.xml",
+        "views/kawiil_financing_menu.xml",
+    ],
     # Sample records, loaded only when a database is created with demo data.
     #
     # TODO: same rule as above — one line per assignment, inserted in order.
@@ -67,7 +73,9 @@
     # tags that already exist:
     #     "demo/config_demo.xml",   2.08
     #     "demo/loan_demo.xml",     2.04
-    "demo": [],
+    "demo": [
+        "demo/loan_demo.xml",
+    ],
     # True gives the module its own top-level menu and makes it show up as an
     # app. False would make it a technical module that only extends others.
     "application": True,

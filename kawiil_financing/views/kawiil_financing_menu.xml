@@ -28,6 +28,10 @@
         with parent="menu_kawiil_financing_root". Give it a sequence so you
         control where it sits among its siblings later on.
     -->
+    <menuitem id="menu_kawiil_financing_motorcycle"
+              name="Motorcycle Financing"
+              parent="menu_kawiil_financing_root"
+              sequence="10"/>
 
     <!--
         TODO: id menu_loan_application, name "Loan Applications", with
@@ -36,6 +40,11 @@
         The action lives in loan_application_views.xml. For this reference to
         resolve, that file has to be listed first in the manifest.
     -->
+    <menuitem id="menu_loan_application"
+              name="Loan Applications"
+          parent="menu_kawiil_financing_motorcycle"
+            action="action_loan_application"
+          sequence="10"/>
 
     <!-- Assignment 2.08. Worked example. Uncomment the menuitem below when
          you reach 2.08, once the two Configuration actions it parents exist.
