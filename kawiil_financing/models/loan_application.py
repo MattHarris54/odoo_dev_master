@@ -29,11 +29,12 @@ class LoanApplication(models.Model):
     name = fields.Char(string="Application Number")
 
     # TODO: loan_term — Integer, labelled "Term (Months)", defaulting to 36.
-
+    loan_term = fields.Integer(string="Term (Months)", default = 36)
     # TODO: interest_rate — Float, labelled "Interest Rate", required=True.
     #       Pass digits=(5, 2) to store 5 digits in total with 2 of them after
     #       the decimal point.
-
+    interest_rate = fields.Float(string = "Interets Rate", required=True, digits=(5,2))
+    
     # TODO: date_applied — Date, labelled "Application Date", defaulting to
     #       today: default=fields.Date.context_today
     #
@@ -42,6 +43,7 @@ class LoanApplication(models.Model):
     #       rather than today: today gives the server's date, context_today
     #       gives the date in the user's own timezone, which is what someone
     #       filing an application late in the evening expects to see.
+    date_applied = fields.Date(string = "Application Date", default=fields.Date.context_today) 
 
     # TODO: state — Selection offering, in this order: Draft, Sent, Approved,
     #       Rejected. The value is a list of (technical_key, label) tuples —
@@ -54,15 +56,23 @@ class LoanApplication(models.Model):
     #       you a fresh draft to work from, not a second loan that claims to
     #       be approved. copy=False makes Odoo fall back to the default
     #       instead of carrying the value over.
-
+    state = fields.Selection(selection=[
+        ("draft", "Draft"),
+        ('sent', 'Sent'),
+        ('approved', "Approved"),
+        ("rejected", 'Rejected')
+    ], copy = False, default ='draft')
+        
+                               
     # TODO: active — Boolean defaulting to True. Odoo treats this exact field
     #       name specially: setting it to False hides the record from list
     #       views instead of deleting it, which is how archiving works.
+    active = fields.Boolean(default=True)
 
     # TODO: notes — Html, labelled "Internal Notes", copy=False. Notes are
     #       about one specific application, so they should not follow a
     #       duplicate to the new record.
-
+    notes = fields.Html(string = "Internal Notes", copy=False)
     # --- Assignment 2.03: links to the rest of Odoo ------------------------
 
     # Worked example. Uncomment it when you reach 2.03. A Many2one holds a
