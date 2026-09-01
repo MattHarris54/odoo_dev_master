@@ -21,6 +21,9 @@
                      Inside the button, render loan_application_count with
                      widget="statinfo", which is the widget that draws a number above
                      its label in a stat button. -->
+                <button type="object" name="action_view_loan_applications" class="oe_stat_button" icon="fa-money">
+                    <field name="loan_application_count" widget="statinfo"/>
+                </button>
             </xpath>
         </field>
     </record>
