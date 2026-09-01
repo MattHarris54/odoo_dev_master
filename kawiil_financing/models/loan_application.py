@@ -1,7 +1,7 @@
 # TODO (3.01): the compute method you write below is decorated with
 # @api.depends, so `api` has to join this import.
-from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo import Command, api, fields, models
+from odoo.exceptions import UserError, ValidationError
 
 # TODO (3.02): raising a ValidationError means importing it first:
 #     from odoo.exceptions import ValidationError
@@ -47,6 +47,10 @@ class LoanApplication(models.Model):
     # TODO (3.02): a second one, following the example above: a CHECK that keeps
     # principal_amount strictly above zero. Nobody finances a motorcycle that costs
     # nothing, and a principal of zero would make the loan arithmetic meaningless.
+    _principal_check = models.Constraint(
+        'CHECK(principal_amount > 0)', 
+        'The principal amount must be strictly greater than zero.'
+    )
 
     name = fields.Char(string="Application Number")
 
@@ -265,9 +269,47 @@ class LoanApplication(models.Model):
     def action_reject_loan(self):
         # TODO (3.03): state to "rejected", date_rejected to today. Same shape as
         # action_approve_loan, including the single write.
-        pass
+        for loan in self:
+            if loan.state != "sent":
+                continue
+                
+        loan.write(
+                {
+                    "state": "rejected",
+                    "date_rejected": fields.Date.context_today(loan),
+                }
+            )
 
     def action_submit(self):
+        for loan in self:
+            if loan.state != "draft":
+                continue
+            required_docs = loan.document_ids.filtered(
+                lambda doc: doc._is_required_for_submit()
+            )
+            if not required_docs:
+                raise UserError(
+                    self.env._(
+                        "Attach the required supporting documents before submitting"
+                    )
+                )
+            unapproved = required_docs.filtered(
+                lambda doc: not doc._is_valid_for_submit()
+            )
+            if unapproved:
+                raise UserError(
+                    self.env._("Every required document must be approved before the "
+                    "application is submitted. '%s' is not.",
+                    unapproved[0].type_id.display_name,)
+            )
+            loan.write(
+                {
+                    "state": "sent",
+                    "date_applied": fields.Date.context_today(loan),
+                }
+            )
+                    
+            
         # TODO (3.03): the guard first, the state change second.
         #
         # Ask each line whether it counts, instead of reaching into the document type
@@ -299,7 +341,7 @@ class LoanApplication(models.Model):
         # On loan, not on self: message_post writes to one record. mail.mt_note is
         # the internal-note subtype, so it lands in the history without emailing the
         # followers — leave it out and everyone following the record gets mail.
-        pass
+
 
     # ---------------------------------------------------------
     # CRUD OVERRIDES
@@ -343,3 +385,23 @@ class LoanApplication(models.Model):
     # Command is the named form of the old "magic tuples" — Command.create(...)
     # instead of (0, 0, {...}). Import it only in the chapter you use it: an unused
     # import is an F401 and the Quality Gate will stop you.
+    @api.model_create_multi
+    def create(self, vals_list):
+        """
+        Overrides standard creation to automatically inject the 
+        required document checklist.
+        """
+        # 1. Fetch the default types using our extensible helper
+        doc_types = self._get_default_document_types()
+
+        # 2. Modify the incoming dictionaries before they hit the database
+        for vals in vals_list:
+            if doc_types:
+                # Prepare the creation commands
+                commands = [Command.create({'type_id': dt.id}) for dt in doc_types]
+                
+                # Append to existing document_ids if they exist, otherwise initialize
+                vals['document_ids'] = vals.get('document_ids', []) + commands
+
+        # 3. Pass the modified vals_list to the standard ORM creation method
+        return super().create(vals_list)
