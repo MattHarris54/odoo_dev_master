@@ -68,6 +68,8 @@
                             <field name="email"/>
                             <field name="phone"/>
                             -->
+                            <field name="email"/>
+                            <field name="phone"/>
                             <field name="product_id"/>
                         </group>
                         <group>
@@ -99,8 +101,9 @@
                                     <field name="down_payment" widget="monetary"/>
                                     <field name="loan_amount" widget="monetary"/>
                                     -->
-                                    <field name="loan_amount"/>
-                                    <field name="down_payment"/>
+                                    <field name="principal_amount" widget="monetary"/>
+                                    <field name="down_payment" widget="monetary"/>
+                                    <field name="loan_amount" widget="monetary"/>
                                 </group>
                                 <group>
                                     <field name="loan_term"/>

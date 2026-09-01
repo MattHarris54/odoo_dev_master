@@ -1,6 +1,7 @@
 # TODO (3.01): the compute method you write below is decorated with
 # @api.depends, so `api` has to join this import.
-from odoo import fields, models
+from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 # TODO (3.02): raising a ValidationError means importing it first:
 #     from odoo.exceptions import ValidationError
@@ -94,6 +95,10 @@ class LoanApplication(models.Model):
     # phone. Both are Char. A related field is a computed field underneath, so
     # leave the defaults alone — read-only, and not stored in the database.
 
+    #DON'T STORE COMPUTED FIELDS
+    email = fields.Char(related="partner_id.email", readonly=True)
+    phone = fields.Char(related="partner_id.phone", readonly=True)
+
     user_id = fields.Many2one(
         comodel_name="res.users",
         string="Salesperson",
@@ -125,7 +130,7 @@ class LoanApplication(models.Model):
     # sorted, so COMMANDS.md's search([("loan_amount", ">", 10000)]) snippet stops
     # working and the list view column stops sorting. store=True, or a search=
     # method, brings those back.
-    loan_amount = fields.Monetary(currency_field="currency_id")
+    loan_amount = fields.Monetary(currency_field="currency_id", compute="_compute_loan_amount", inverse="_inverse_loan_amount")
 
     down_payment = fields.Monetary(currency_field="currency_id")
 
@@ -149,8 +154,10 @@ class LoanApplication(models.Model):
     # _compute_loan_amount also needs a decorator, once `api` is imported:
     #     @api.depends("principal_amount", "down_payment")
     # Leave it off and the field is computed once and never refreshed again.
-
+    @api.depends("principal_amount", "down_payment")
     def _compute_loan_amount(self):
+        for record in self:
+            record.loan_amount = record.principal_amount - record.down_payment
         # TODO (3.01): the arithmetic is right, the shape is wrong. This assigns to
         # self, which only works when self holds exactly one record — and a compute
         # method is handed every record that needs the value at once, so as soon as
@@ -161,14 +168,15 @@ class LoanApplication(models.Model):
         # That error is the one you will meet most often in Odoo, and this is what it
         # always means: code written for one record was given several. Wrap the line
         # in `for record in self:` and assign to record instead of self.
-        self.loan_amount = self.principal_amount - self.down_payment
+        #self.loan_amount = self.principal_amount - self.down_payment
 
     def _inverse_loan_amount(self):
+        for record in self:
+            record.down_payment = record.principal_amount -  record.loan_amount
         # TODO (3.01): the same arithmetic rearranged, in the shape you just gave the
         # compute. Odoo calls this on save for the records whose loan_amount was
         # typed in by hand, and principal_amount is the figure that stays put:
         #     down_payment = principal_amount - loan_amount
-        pass
 
     # Optional (3.01) — how to make loan_amount searchable again.
     #
@@ -209,13 +217,17 @@ class LoanApplication(models.Model):
     # so Odoo re-runs it whenever either field is written. Note the difference from
     # the SQL constraints above: this one only fires on writes that go through the
     # ORM, and it can say something specific about what went wrong.
-
+    @api.constrains("principal_amount", "down_payment")
     def _check_down_payment(self):
         # TODO (3.02): loop over self, and raise ValidationError where down_payment
         # is greater than or equal to principal_amount. Wrap the message in
         # self.env._("...") so it can be exported to the translation files — that
         # is the Odoo 19 idiom, and it replaces the older `from odoo import _`.
-        pass
+        for loan in self:
+            if loan.down_payment >= loan.principal_amount:
+                raise ValidationError(
+                    self.env._("The down payment cannot be greater than or equal to the principal amount.")
+                )
 
     # ---------------------------------------------------------
     # ACTION METHODS
